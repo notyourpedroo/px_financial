@@ -24,7 +24,17 @@ async function fetchData() {
     const accumulatedValuesByYear = getAccumulatedValuesByYear(data);
 
     // Criar o gráfico com base no estado do 'timeFrame' e 'accumulated'
-    createChart(labelsByDay, values, labelsByMonth, monthlyValues, labelsByYear, annualValues, accumulatedValuesByDay, accumulatedValuesByMonth, accumulatedValuesByYear);
+    createChart(
+        labelsByDay,
+        values,
+        labelsByMonth,
+        monthlyValues,
+        labelsByYear,
+        annualValues,
+        accumulatedValuesByDay,
+        accumulatedValuesByMonth, 
+        accumulatedValuesByYear
+    );
 }
 
 
@@ -168,7 +178,17 @@ function getMinValue(values) {
 
 
 // Função para criar o gráfico
-function createChart(labelsByDay, values, labelsByMonth, monthlyValues, labelsByYear, annualValues, accumulatedValuesByDay, accumulatedValuesByMonth, accumulatedValuesByYear) {
+function createChart(
+    labelsByDay,
+    values,
+    labelsByMonth,
+    monthlyValues,
+    labelsByYear,
+    annualValues,
+    accumulatedValuesByDay,
+    accumulatedValuesByMonth,
+    accumulatedValuesByYear
+) {
     const ctx = document.getElementById('lineChart').getContext('2d');
 
     if (chartInstance) {
