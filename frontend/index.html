@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PX Financial</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="static/js/script.js"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+    <!-- Container Principal -->
+    <div class="container mx-auto px-4 py-8">
+
+        <!-- Título -->
+        <h1 class="text-3xl font-semibold text-center text-gray-800 mb-8">Results</h1>
+
+        <!-- Container para Botões e Gráfico com bordas arredondadas e sombra -->
+        <div class="bg-white p-6 rounded-3xl shadow-2xl">
+
+            <!-- Botões de Alternância -->
+            <div class="flex justify-center space-x-4 mb-6">
+                <button onclick="switchGraph('day')" class="bg-[rgb(202,126,255)] text-white py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
+                    DAY
+                </button>
+                <button onclick="switchGraph('month')" class="bg-[rgb(202,126,255)] text-white py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
+                    MONTH
+                </button>
+                <button onclick="switchGraph('year')" class="bg-[rgb(202,126,255)] text-white py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
+                    YEAR
+                </button>
+                <button onclick="toggleAccumulated()" class="bg-gray-500 text-white py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
+                    CUMULATIVE
+                </button>
+            </div>
+
+            <!-- Gráfico -->
+            <div class="max-w-4xl mx-auto">
+                <canvas id="lineChart"></canvas>
+            </div>
+
+        </div> <!-- Fim do container com bordas arredondadas e sombra -->
+
+    </div>
+
+</body>
+
+</html>
