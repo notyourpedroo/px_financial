@@ -1,17 +1,12 @@
-let chartInstance = null;  // Variável para armazenar a instância do gráfico
-let timeFrame = 'day';  // Estado inicial como 'day' (por padrão, gráfico por dia)
-let accumulated = false;  // Variável de estado para alternar entre normal e acumulado
+let chartInstance = null;
+let timeFrame = 'day';
+let accumulated = false;
 
-
-// Função para fazer a requisição e obter os dados
 async function fetchData() {
     const response = await fetch('http://127.0.0.1:5000/load');
     const data = await response.json();
 
-    // Extrair os dados para os três gráficos
     const labelsByDay = data.map(item => formatDate(item.date));
-
-    // Extrair os valores de ambas as colunas
     const grossValues = data.map(item => item.gross_value);
     const netValues = data.map(item => item.net_value);
 
@@ -23,7 +18,6 @@ async function fetchData() {
     const annualGrossValues = getAnnualValues(data, 'gross_value');
     const annualNetValues = getAnnualValues(data, 'net_value');
 
-    // Cálculo dos valores acumulados
     const accumulatedGrossByDay = getAccumulatedValuesByDay(data, 'gross_value');
     const accumulatedNetByDay = getAccumulatedValuesByDay(data, 'net_value');
 
@@ -33,7 +27,6 @@ async function fetchData() {
     const accumulatedGrossByYear = getAccumulatedValuesByYear(data, 'gross_value');
     const accumulatedNetByYear = getAccumulatedValuesByYear(data, 'net_value');
 
-    // Criar o gráfico com os novos dados
     createChart(
         labelsByDay, grossValues, netValues,
         labelsByMonth, monthlyGrossValues, monthlyNetValues,
@@ -44,66 +37,54 @@ async function fetchData() {
     );
 }
 
-
-// Função para formatar a data no formato 'dd/mm/yyyy'
 function formatDate(dateString) {
     const date = new Date(dateString);
-    const day = String(date.getUTCDate()).padStart(2, '0');  // Usar getUTCDate() para evitar problemas de fuso horário
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');  // Usar getUTCMonth() para evitar problemas de fuso horário
-    const year = date.getUTCFullYear();  // Usar getUTCFullYear() para evitar problemas de fuso horário
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
 
     return `${day}/${month}/${year}`;
 }
 
-
-// Função para extrair os meses do último ano
 function getMonthlyLabels(data) {
     const months = [
         'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
     ];
 
-    const uniqueMonths = new Set();  // Para garantir que temos meses únicos
+    const uniqueMonths = new Set();
 
     data.forEach(item => {
-        const month = new Date(item.date).getMonth();  // Obtém o mês (0-11)
+        const month = new Date(item.date).getMonth();
         uniqueMonths.add(month);
     });
 
-    // Ordena os meses em ordem crescente e os converte para nomes
     return Array.from(uniqueMonths).sort().map(monthIndex => months[monthIndex]);
 }
 
-
-// Função para extrair os anos dos dados
 function getAnnualLabels(data) {
-    const uniqueYears = new Set();  // Para garantir que temos anos únicos
+    const uniqueYears = new Set();
 
     data.forEach(item => {
-        const year = new Date(item.date).getFullYear();  // Obtém o ano
+        const year = new Date(item.date).getFullYear();
         uniqueYears.add(year);
     });
 
-    // Ordena os anos em ordem crescente
     return Array.from(uniqueYears).sort();
 }
 
-
-// Função para calcular os valores agregados por mês
 function getMonthlyValues(data, columnName) {
     const monthlyValues = new Array(12).fill(0);
 
     data.forEach(item => {
         const month = new Date(item.date).getMonth();
-        const value = item[columnName];  // Usa a coluna correta
+        const value = item[columnName];
         monthlyValues[month] += value;
     });
 
     return monthlyValues;
 }
 
-
-// Função para calcular os valores agregados por ano
 function getAnnualValues(data, columnName) {
     const annualValues = {};
 
@@ -121,8 +102,6 @@ function getAnnualValues(data, columnName) {
     return Object.keys(annualValues).sort().map(year => annualValues[year]);
 }
 
-
-// Função para calcular os valores acumulados por dia
 function getAccumulatedValuesByDay(data, columnName) {
     let accumulated = 0;
     return data.map(item => {
@@ -131,8 +110,6 @@ function getAccumulatedValuesByDay(data, columnName) {
     });
 }
 
-
-// Função para calcular os valores acumulados por mês
 function getAccumulatedValuesByMonth(data, columnName) {
     const monthlyValues = new Array(12).fill(0);
     let accumulated = 0;
@@ -149,8 +126,6 @@ function getAccumulatedValuesByMonth(data, columnName) {
     });
 }
 
-
-// Função para calcular os valores acumulados por ano
 function getAccumulatedValuesByYear(data, columnName) {
     const annualValues = {};
     let accumulated = 0;
@@ -172,14 +147,10 @@ function getAccumulatedValuesByYear(data, columnName) {
     });
 }
 
-
-// Função para calcular o valor mínimo dos dados
 function getMinValue(values) {
     return Math.min(...values);
 }
 
-
-// Função para criar o gráfico
 function createChart(
     labelsByDay,
     grossValues,
@@ -203,22 +174,20 @@ function createChart(
         chartInstance.destroy();
     }
 
-    // Seleciona os valores corretos conforme os estados
-    const selectedGrossValues = accumulated ?
+    const selectedGrossValues = accumulated ? 
         (timeFrame === 'day' ? accumulatedGrossByDay : 
             (timeFrame === 'month' ? accumulatedGrossByMonth : accumulatedGrossByYear)) 
         :
         (timeFrame === 'day' ? grossValues : 
             (timeFrame === 'month' ? monthlyGrossValues : annualGrossValues));
 
-    const selectedNetValues = accumulated ?
+    const selectedNetValues = accumulated ? 
         (timeFrame === 'day' ? accumulatedNetByDay : 
             (timeFrame === 'month' ? accumulatedNetByMonth : accumulatedNetByYear)) 
         :
         (timeFrame === 'day' ? netValues : 
             (timeFrame === 'month' ? monthlyNetValues : annualNetValues));
 
-    // Define os rótulos
     const labels = timeFrame === 'day' ? labelsByDay : (timeFrame === 'month' ? labelsByMonth : labelsByYear);
 
     chartInstance = new Chart(ctx, {
@@ -278,20 +247,14 @@ function createChart(
     });
 }
 
-
-// Função para alternar entre gráficos de dia, mês e ano
 function switchGraph(newTimeFrame) {
-    timeFrame = newTimeFrame;  // Atualiza o estado global
-    fetchData();  // Refaz a requisição com base no novo tipo de gráfico
+    timeFrame = newTimeFrame;
+    fetchData();
 }
 
-
-// Função para alternar entre gráfico normal e acumulado
 function toggleAccumulated() {
-    accumulated = !accumulated;  // Alterna o estado
-    fetchData();  // Refaz a requisição com base no novo estado
+    accumulated = !accumulated;
+    fetchData();
 }
 
-
-// Inicializa o gráfico ao carregar
 fetchData();
