@@ -9,31 +9,38 @@ async function fetchData() {
     const data = await response.json();
 
     // Extrair os dados para os três gráficos
-    const labelsByDay = data.map(item => formatDate(item.date));  // Formata a data para 'dd/mm/yyyy'
-    const values = data.map(item => item.value);  // Coluna 'value'
+    const labelsByDay = data.map(item => formatDate(item.date));
 
-    const labelsByMonth = getMonthlyLabels(data);  // Obtém os meses do ano com dados
-    const monthlyValues = getMonthlyValues(data);  // Soma os valores por mês
+    // Extrair os valores de ambas as colunas
+    const grossValues = data.map(item => item.gross_value);
+    const netValues = data.map(item => item.net_value);
 
-    const labelsByYear = getAnnualLabels(data);  // Obtém os anos com dados
-    const annualValues = getAnnualValues(data);  // Soma os valores por ano
+    const labelsByMonth = getMonthlyLabels(data);
+    const monthlyGrossValues = getMonthlyValues(data, 'gross_value');
+    const monthlyNetValues = getMonthlyValues(data, 'net_value');
+
+    const labelsByYear = getAnnualLabels(data);
+    const annualGrossValues = getAnnualValues(data, 'gross_value');
+    const annualNetValues = getAnnualValues(data, 'net_value');
 
     // Cálculo dos valores acumulados
-    const accumulatedValuesByDay = getAccumulatedValuesByDay(data);
-    const accumulatedValuesByMonth = getAccumulatedValuesByMonth(data);
-    const accumulatedValuesByYear = getAccumulatedValuesByYear(data);
+    const accumulatedGrossByDay = getAccumulatedValuesByDay(data, 'gross_value');
+    const accumulatedNetByDay = getAccumulatedValuesByDay(data, 'net_value');
 
-    // Criar o gráfico com base no estado do 'timeFrame' e 'accumulated'
+    const accumulatedGrossByMonth = getAccumulatedValuesByMonth(data, 'gross_value');
+    const accumulatedNetByMonth = getAccumulatedValuesByMonth(data, 'net_value');
+
+    const accumulatedGrossByYear = getAccumulatedValuesByYear(data, 'gross_value');
+    const accumulatedNetByYear = getAccumulatedValuesByYear(data, 'net_value');
+
+    // Criar o gráfico com os novos dados
     createChart(
-        labelsByDay,
-        values,
-        labelsByMonth,
-        monthlyValues,
-        labelsByYear,
-        annualValues,
-        accumulatedValuesByDay,
-        accumulatedValuesByMonth, 
-        accumulatedValuesByYear
+        labelsByDay, grossValues, netValues,
+        labelsByMonth, monthlyGrossValues, monthlyNetValues,
+        labelsByYear, annualGrossValues, annualNetValues,
+        accumulatedGrossByDay, accumulatedNetByDay,
+        accumulatedGrossByMonth, accumulatedNetByMonth,
+        accumulatedGrossByYear, accumulatedNetByYear
     );
 }
 
@@ -83,13 +90,13 @@ function getAnnualLabels(data) {
 
 
 // Função para calcular os valores agregados por mês
-function getMonthlyValues(data) {
-    const monthlyValues = new Array(12).fill(0);  // 12 meses do ano (inicializa todos os valores como 0)
+function getMonthlyValues(data, columnName) {
+    const monthlyValues = new Array(12).fill(0);
 
     data.forEach(item => {
-        const month = new Date(item.date).getMonth();  // Obtém o mês (0-11)
-        const value = item.value;  // Valor associado ao item
-        monthlyValues[month] += value;  // Soma os valores para o mês correspondente
+        const month = new Date(item.date).getMonth();
+        const value = item[columnName];  // Usa a coluna correta
+        monthlyValues[month] += value;
     });
 
     return monthlyValues;
@@ -97,47 +104,45 @@ function getMonthlyValues(data) {
 
 
 // Função para calcular os valores agregados por ano
-function getAnnualValues(data) {
-    const annualValues = {};  // Objeto para armazenar valores por ano
+function getAnnualValues(data, columnName) {
+    const annualValues = {};
 
     data.forEach(item => {
-        const year = new Date(item.date).getFullYear();  // Obtém o ano
-        const value = item.value;  // Valor associado ao item
+        const year = new Date(item.date).getFullYear();
+        const value = item[columnName];
 
         if (!annualValues[year]) {
             annualValues[year] = 0;
         }
 
-        annualValues[year] += value;  // Soma os valores para o ano correspondente
+        annualValues[year] += value;
     });
 
-    // Retorna os valores por ano em uma ordem correspondente aos anos
     return Object.keys(annualValues).sort().map(year => annualValues[year]);
 }
 
 
 // Função para calcular os valores acumulados por dia
-function getAccumulatedValuesByDay(data) {
+function getAccumulatedValuesByDay(data, columnName) {
     let accumulated = 0;
     return data.map(item => {
-        accumulated += item.value;
+        accumulated += item[columnName];
         return accumulated;
     });
 }
 
 
 // Função para calcular os valores acumulados por mês
-function getAccumulatedValuesByMonth(data) {
-    const monthlyValues = new Array(12).fill(0);  // 12 meses do ano (inicializa todos os valores como 0)
+function getAccumulatedValuesByMonth(data, columnName) {
+    const monthlyValues = new Array(12).fill(0);
     let accumulated = 0;
 
     data.forEach(item => {
-        const month = new Date(item.date).getMonth();  // Obtém o mês (0-11)
-        const value = item.value;  // Valor associado ao item
-        monthlyValues[month] += value;  // Soma os valores para o mês correspondente
+        const month = new Date(item.date).getMonth();
+        const value = item[columnName];
+        monthlyValues[month] += value;
     });
 
-    // Acumula os valores mensais
     return monthlyValues.map(value => {
         accumulated += value;
         return accumulated;
@@ -146,28 +151,25 @@ function getAccumulatedValuesByMonth(data) {
 
 
 // Função para calcular os valores acumulados por ano
-function getAccumulatedValuesByYear(data) {
-    const annualValues = {};  // Objeto para armazenar valores por ano
+function getAccumulatedValuesByYear(data, columnName) {
+    const annualValues = {};
     let accumulated = 0;
 
     data.forEach(item => {
-        const year = new Date(item.date).getFullYear();  // Obtém o ano
-        const value = item.value;  // Valor associado ao item
+        const year = new Date(item.date).getFullYear();
+        const value = item[columnName];
 
         if (!annualValues[year]) {
             annualValues[year] = 0;
         }
 
-        annualValues[year] += value;  // Soma os valores para o ano correspondente
+        annualValues[year] += value;
     });
 
-    // Retorna os valores acumulados por ano
-    const accumulatedValues = Object.keys(annualValues).sort().map(year => {
+    return Object.keys(annualValues).sort().map(year => {
         accumulated += annualValues[year];
         return accumulated;
     });
-
-    return accumulatedValues;
 }
 
 
@@ -180,55 +182,73 @@ function getMinValue(values) {
 // Função para criar o gráfico
 function createChart(
     labelsByDay,
-    values,
+    grossValues,
+    netValues,
     labelsByMonth,
-    monthlyValues,
+    monthlyGrossValues,
+    monthlyNetValues,
     labelsByYear,
-    annualValues,
-    accumulatedValuesByDay,
-    accumulatedValuesByMonth,
-    accumulatedValuesByYear
+    annualGrossValues,
+    annualNetValues,
+    accumulatedGrossByDay,
+    accumulatedNetByDay,
+    accumulatedGrossByMonth,
+    accumulatedNetByMonth,
+    accumulatedGrossByYear,
+    accumulatedNetByYear
 ) {
     const ctx = document.getElementById('lineChart').getContext('2d');
 
     if (chartInstance) {
-        chartInstance.destroy();  // Destrói o gráfico anterior
+        chartInstance.destroy();
     }
 
-    // Obter os dados corretos (normal ou acumulado)
-    const dataValues = accumulated ? 
-        (timeFrame === 'day' ? accumulatedValuesByDay : 
-            (timeFrame === 'month' ? accumulatedValuesByMonth : accumulatedValuesByYear)) 
-        : 
-        (timeFrame === 'day' ? values : 
-            (timeFrame === 'month' ? monthlyValues : annualValues));
+    // Seleciona os valores corretos conforme os estados
+    const selectedGrossValues = accumulated ?
+        (timeFrame === 'day' ? accumulatedGrossByDay : 
+            (timeFrame === 'month' ? accumulatedGrossByMonth : accumulatedGrossByYear)) 
+        :
+        (timeFrame === 'day' ? grossValues : 
+            (timeFrame === 'month' ? monthlyGrossValues : annualGrossValues));
 
-    // Calcular o valor mínimo
-    const minValue = getMinValue(dataValues);
+    const selectedNetValues = accumulated ?
+        (timeFrame === 'day' ? accumulatedNetByDay : 
+            (timeFrame === 'month' ? accumulatedNetByMonth : accumulatedNetByYear)) 
+        :
+        (timeFrame === 'day' ? netValues : 
+            (timeFrame === 'month' ? monthlyNetValues : annualNetValues));
 
-    // Criar o gradiente para o fundo
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);  // Gradiente do topo para a base (do 0 ao 400)
-    gradient.addColorStop(0, 'rgba(202, 126, 255, 1)');  // Cor sólida no topo
-    gradient.addColorStop(1, 'rgba(202, 126, 255, 0)');  // Transparente na base
+    // Define os rótulos
+    const labels = timeFrame === 'day' ? labelsByDay : (timeFrame === 'month' ? labelsByMonth : labelsByYear);
 
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: timeFrame === 'day' ? labelsByDay : (timeFrame === 'month' ? labelsByMonth : labelsByYear),
-            datasets: [{
-                label: 'Valor',
-                data: dataValues,
-                borderColor: 'rgb(202, 126, 255)',
-                backgroundColor: gradient,
-                tension: 0.1,
-                fill: true  // Preencher abaixo da linha
-            }]
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Gross Value',
+                    data: selectedGrossValues,
+                    borderColor: 'rgb(140, 140, 140)',
+                    backgroundColor: 'rgba(140, 140, 140, 0.5)',
+                    tension: 0.1,
+                    fill: true
+                },
+                {
+                    label: 'Net Value',
+                    data: selectedNetValues,
+                    borderColor: 'rgb(202, 126, 255)',
+                    backgroundColor: 'rgba(202, 126, 255, 0.5)',
+                    tension: 0.1,
+                    fill: true
+                }
+            ]
         },
         options: {
             responsive: true,
             plugins: {
                 legend: {
-                    display: false
+                    display: true
                 },
                 tooltip: {
                     callbacks: {
@@ -246,8 +266,7 @@ function createChart(
                     }
                 },
                 y: {
-                    beginAtZero: minValue >= 0,  // Se não houver valores negativos, começa do 0
-                    min: minValue < 0 ? minValue : 0,  // Caso haja valores negativos, começa no menor valor negativo
+                    beginAtZero: true,
                     ticks: {
                         callback: function(value) {
                             return 'R$ ' + value.toFixed(2);
